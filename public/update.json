@@ -1,0 +1,15 @@
+{
+  "version": "1.5",
+  "versionCode": 15,
+  "apkUrl": "https://github.com/Flyfish-6666/shiguang-qingdan/releases/download/v1.5/shiguang-qingdan-1.5.apk",
+  "releaseUrl": "https://github.com/Flyfish-6666/shiguang-qingdan/releases/tag/v1.5",
+  "releasesUrl": "https://github.com/Flyfish-6666/shiguang-qingdan/releases",
+  "forceUpdate": false,
+  "publishedAt": "2026-07-13",
+  "notes": [
+    "移除设置中心异常弧线，优化夜间模式设置页可读性",
+    "修复移动端布局自检对四象限页的误报",
+    "增强课程表视觉回归：覆盖跨 2 小节大课场景",
+    "同步应用版本、Android 版本与 GitHub 更新清单到 1.5"
+  ]
+}

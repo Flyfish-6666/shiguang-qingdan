@@ -1,0 +1,59 @@
+{
+  "name": "daily-hub",
+  "private": true,
+  "version": "1.5.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "mobile:sync": "npm run build && cap sync",
+    "mobile:copy": "npm run build && cap copy",
+    "android:add": "cap add android",
+    "android:sync": "npm run build && cap sync android",
+    "android:debug": "npm run android:sync && cd android && gradlew.bat assembleDebug",
+    "android:open": "cap open android",
+    "ios:add": "cap add ios",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "cap open ios",
+    "mobile:doctor": "node scripts/mobile-doctor.mjs",
+    "quality:verify": "npm run verify && npm run layout:doctor",
+    "mobile:verify": "npm run quality:verify && npm run mobile:doctor && npm run mobile:sync",
+    "app:doctor": "node scripts/app-doctor.mjs",
+    "layout:doctor": "node scripts/mobile-layout-doctor.mjs",
+    "quick-capture:doctor": "node scripts/quick-capture-doctor.mjs",
+    "visual:snapshot": "node scripts/visual-snapshot.mjs",
+    "verify": "npm run app:doctor && npm run quick-capture:doctor && npm run build && npm run lint",
+    "icons:generate": "powershell -ExecutionPolicy Bypass -File scripts/generate-app-icons.ps1",
+    "apk:debug": "npm run android:debug",
+    "release:github": "node scripts/prepare-github-release.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.4.1",
+    "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
+    "lucide-react": "^1.23.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "oxlint": "^1.71.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
+  }
+}
