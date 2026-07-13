@@ -145,7 +145,7 @@ function Draw-Splash($size, $path) {
   $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $graphics.Clear([System.Drawing.ColorTranslator]::FromHtml('#fbf4e9'))
   $tmp = Join-Path $env:TEMP "shiguang-icon-$size.png"
-  Draw-Logo ([int]($size * 0.30)) $tmp
+  Draw-Logo ([int]($size * 0.20)) $tmp
   $icon = [System.Drawing.Image]::FromFile($tmp)
   $x = ($size - $icon.Width) / 2
   $y = ($size - $icon.Height) / 2

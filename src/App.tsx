@@ -1793,77 +1793,6 @@ function TodayView({
         </div>
       </section>
 
-      <SectionTitle icon="modules" title="常用功能" hint="长按替换" />
-      <div className="quick-action-rail home-card-grid" aria-label="首页常用功能">
-        {pinnedHomeCards.map((card, index) => (
-          <button
-            className={`quick-action-chip home-module-card tone-${card.tone}`}
-            key={`${card.key}-${index}`}
-            style={{ '--tap-index': index } as CSSProperties}
-            type="button"
-            onClick={() => setView(card.view)}
-            onContextMenu={(event) => {
-              event.preventDefault()
-              setReplacingHomeSlot(index)
-            }}
-            onPointerDown={(event) => {
-              const target = event.currentTarget
-              const timeout = window.setTimeout(() => {
-                setReplacingHomeSlot(index)
-                triggerHaptic('tap')
-              }, 520)
-              const clear = () => window.clearTimeout(timeout)
-              target.addEventListener('pointerup', clear, { once: true })
-              target.addEventListener('pointerleave', clear, { once: true })
-              target.addEventListener('pointercancel', clear, { once: true })
-            }}
-          >
-            <span><Icon name={card.icon} /></span>
-            <strong>{card.title}</strong>
-            <small>{card.value} · {card.meta}</small>
-          </button>
-        ))}
-      </div>
-      {replacingHomeSlot !== null && (
-        <section className="home-module-picker">
-          <div>
-            <strong>替换第 {replacingHomeSlot + 1} 个首页入口</strong>
-            <button type="button" onClick={() => setReplacingHomeSlot(null)}>完成</button>
-          </div>
-          <div>
-            {homeModuleCards.map((card) => (
-              <button
-                className={normalizedHomeModules[replacingHomeSlot] === card.key ? 'active' : ''}
-                type="button"
-                key={card.key}
-                onClick={() => {
-                  setHomeModuleSlot(replacingHomeSlot, card.key)
-                  setReplacingHomeSlot(null)
-                }}
-              >
-                <Icon name={card.icon} />
-                {card.shortTitle}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="home-jump-card">
-        <div>
-          <span className="eyebrow">快速查看</span>
-          <strong>直接跳到今天的内容</strong>
-        </div>
-        <div>
-          {jumpActions.map((action) => (
-            <button type="button" key={action.label} onClick={() => jumpTo(action.ref)}>
-              <Icon name={action.icon} />
-              {action.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
       <form className="quick-capture" onSubmit={submitQuick}>
         <span aria-hidden="true"><Icon name="pen" /></span>
         <div className="quick-capture-copy">
@@ -1934,6 +1863,77 @@ function TodayView({
           </button>
         ))}
       </div>
+
+      <SectionTitle icon="modules" title="常用功能" hint="长按替换" />
+      <div className="quick-action-rail home-card-grid" aria-label="首页常用功能">
+        {pinnedHomeCards.map((card, index) => (
+          <button
+            className={`quick-action-chip home-module-card tone-${card.tone}`}
+            key={`${card.key}-${index}`}
+            style={{ '--tap-index': index } as CSSProperties}
+            type="button"
+            onClick={() => setView(card.view)}
+            onContextMenu={(event) => {
+              event.preventDefault()
+              setReplacingHomeSlot(index)
+            }}
+            onPointerDown={(event) => {
+              const target = event.currentTarget
+              const timeout = window.setTimeout(() => {
+                setReplacingHomeSlot(index)
+                triggerHaptic('tap')
+              }, 520)
+              const clear = () => window.clearTimeout(timeout)
+              target.addEventListener('pointerup', clear, { once: true })
+              target.addEventListener('pointerleave', clear, { once: true })
+              target.addEventListener('pointercancel', clear, { once: true })
+            }}
+          >
+            <span><Icon name={card.icon} /></span>
+            <strong>{card.title}</strong>
+            <small>{card.value} · {card.meta}</small>
+          </button>
+        ))}
+      </div>
+      {replacingHomeSlot !== null && (
+        <section className="home-module-picker">
+          <div>
+            <strong>替换第 {replacingHomeSlot + 1} 个首页入口</strong>
+            <button type="button" onClick={() => setReplacingHomeSlot(null)}>完成</button>
+          </div>
+          <div>
+            {homeModuleCards.map((card) => (
+              <button
+                className={normalizedHomeModules[replacingHomeSlot] === card.key ? 'active' : ''}
+                type="button"
+                key={card.key}
+                onClick={() => {
+                  setHomeModuleSlot(replacingHomeSlot, card.key)
+                  setReplacingHomeSlot(null)
+                }}
+              >
+                <Icon name={card.icon} />
+                {card.shortTitle}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="home-jump-card">
+        <div>
+          <span className="eyebrow">快速查看</span>
+          <strong>直接跳到今天的内容</strong>
+        </div>
+        <div>
+          {jumpActions.map((action) => (
+            <button type="button" key={action.label} onClick={() => jumpTo(action.ref)}>
+              <Icon name={action.icon} />
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <SectionTitle icon="modules" title="全部功能" hint={`${modules.length}`} />
       <div className="today-module-grid" aria-label="全部功能入口">
@@ -2296,7 +2296,7 @@ function CalendarView({
               </button>
             ))}
           </div>
-          <input aria-label="????" placeholder="?? / ??????" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} />
+          <input aria-label="日程备注" placeholder="地点 / 需要准备的事" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} />
           <div className="edit-actions">
             <button className="primary-action" type="submit" disabled={!canSubmitEvent}>{editingId ? '保存修改' : '加入日程'}</button>
             {editingId && <button className="soft-action danger" type="button" onClick={() => {
@@ -5021,12 +5021,12 @@ function NotesView({
         <form className="form-card sheet-form" onSubmit={submit}>
           <input aria-label="便签标题" enterKeyHint="next" placeholder="标题" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
           <textarea aria-label="便签内容" enterKeyHint="done" placeholder="随手记一点，不一定要变成任务。" value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} />
-          <div className="note-color-picker" aria-label="????">
+          <div className="note-color-picker" aria-label="便签颜色">
             {[
-              { key: 'amber', label: '???' },
-              { key: 'rose', label: '???' },
-              { key: 'blue', label: '???' },
-              { key: 'mint', label: '???' },
+              { key: 'amber', label: '暖黄' },
+              { key: 'rose', label: '玫瑰' },
+              { key: 'blue', label: '晴蓝' },
+              { key: 'mint', label: '薄荷' },
             ].map((item) => (
               <button
                 className={form.color === item.key ? `note-color-swatch ${item.key} active` : `note-color-swatch ${item.key}`}
@@ -5038,7 +5038,7 @@ function NotesView({
                 {item.label}
               </button>
             ))}
-            <button className={form.pinned ? 'toggle-line active' : 'toggle-line'} type="button" onClick={() => setForm({ ...form, pinned: !form.pinned })}>??</button>
+            <button className={form.pinned ? 'toggle-line active' : 'toggle-line'} type="button" onClick={() => setForm({ ...form, pinned: !form.pinned })}>{form.pinned ? '已置顶' : '置顶'}</button>
           </div>
           <div className="edit-actions">
             <button className="primary-action" type="submit" disabled={!canSubmitNote}>{editingId ? '保存便签' : '加入便签'}</button>
@@ -5331,10 +5331,10 @@ function SettingsView({
     data.journalEntries.length +
     data.notes.length
   const settingsOverview = [
-    { label: '外观', value: appearanceLabel, icon: 'appearance' as IconName },
-    { label: '预算', value: settings.monthlyBudget > 0 ? `${budgetRate}%` : '未设', icon: 'ledger' as IconName },
-    { label: '首页', value: `${homeModuleKeys.length} 个`, icon: 'modules' as IconName },
-    { label: '更新', value: APP_VERSION, icon: 'sparkles' as IconName },
+    { label: '外观', value: appearanceLabel, icon: 'appearance' as IconName, panel: 'appearance' as SettingsPanel },
+    { label: '预算', value: settings.monthlyBudget > 0 ? `${budgetRate}%` : '未设', icon: 'ledger' as IconName, panel: 'budget' as SettingsPanel },
+    { label: '首页', value: `${homeModuleKeys.length} 个`, icon: 'modules' as IconName, panel: 'modules' as SettingsPanel },
+    { label: '更新', value: APP_VERSION, icon: 'sparkles' as IconName, panel: 'update' as SettingsPanel },
   ]
 
   async function handleImportChange(event: FormEvent<HTMLInputElement>) {
@@ -5417,7 +5417,7 @@ function SettingsView({
       setUpdateManifest(manifest)
       triggerHaptic(isNewerVersion(manifest.version, APP_VERSION) ? 'success' : 'tap')
     } catch {
-      setUpdateError('暂时没有读到 GitHub 更新信息。仓库建好后，把 update.json 放到 main 分支就可以检查。')
+      setUpdateError('暂时没有发现可用的新版本，请稍后再试。')
       setUpdateManifest(null)
       triggerHaptic('warning')
     } finally {
@@ -5478,7 +5478,7 @@ function SettingsView({
 
         {panel === 'modules' && (
           <>
-            <SectionTitle icon="modules" title="首页六宫格" hint={`${homeModuleKeys.length}/${MAX_HOME_MODULES}`} />
+            <SectionTitle icon="modules" title="首页入口" hint={`${homeModuleKeys.length}/${MAX_HOME_MODULES}`} />
             <div className="home-module-settings-grid">
               {homeModuleKeys.map((key, index) => {
                 const selected = modules.find((module) => module.key === key) ?? modules[0]
@@ -5553,7 +5553,7 @@ function SettingsView({
             <SectionTitle icon="sparkles" title="版本更新" hint={`当前 ${APP_VERSION}`} />
             <section className="update-center-card">
               <div>
-                <span className="eyebrow">GitHub Releases</span>
+                <span className="eyebrow">版本中心</span>
                 <strong>{updateManifest ? `发现 ${updateManifest.version}` : `当前版本 ${APP_VERSION}`}</strong>
                 <p>
                   {updateManifest
@@ -5562,7 +5562,7 @@ function SettingsView({
                         ? '这个版本建议尽快更新，但仍由你手动确认下载安装。'
                         : '发现新版，可按需下载；不喜欢新版也可以回到历史版本。'
                       : '当前已经是最新版本，也可以打开历史版本页回退安装。'
-                    : '点击检查后，会读取 GitHub 上的 update.json。'}
+                    : '点击检查后，会查看是否有可下载的新版本。'}
                 </p>
               </div>
               <button className="primary-action" type="button" disabled={updateChecking} onClick={() => void checkForUpdate()}>
@@ -5571,20 +5571,24 @@ function SettingsView({
             </section>
             {updateManifest && (
               <div className="update-release-card">
-                <div>
-                  <strong>版本 {updateManifest.version}</strong>
-                  <small>{updateManifest.publishedAt || 'GitHub 发布'}</small>
+                <div className="update-release-head">
+                  <div>
+                    <span className="eyebrow">更新包</span>
+                    <strong>拾光清单 {updateManifest.version}</strong>
+                    <small>{updateManifest.publishedAt || '已准备好下载'}</small>
+                  </div>
+                  <span className="update-version-badge">APK</span>
                 </div>
                 {updateManifest.notes?.length ? (
-                  <ul>
+                  <ul className="update-note-list">
                     {updateManifest.notes.slice(0, 4).map((note) => <li key={note}>{note}</li>)}
                   </ul>
                 ) : (
                   <p>这个版本没有填写更新说明。</p>
                 )}
-                <div className="edit-actions">
+                <div className="edit-actions update-release-actions">
                   <button className="primary-action" type="button" onClick={() => openUpdateUrl(updateManifest.apkUrl)}>下载 APK</button>
-                  <button className="soft-action" type="button" onClick={() => openUpdateUrl(updateManifest.releaseUrl)}>发布页</button>
+                  <button className="soft-action" type="button" onClick={() => openUpdateUrl(updateManifest.releaseUrl)}>查看说明</button>
                   <button className="soft-action" type="button" onClick={() => openUpdateUrl(updateManifest.releasesUrl || UPDATE_HISTORY_URL)}>历史版本</button>
                 </div>
               </div>
@@ -5597,7 +5601,7 @@ function SettingsView({
             )}
             <div className="settings-note">
               <Icon name="lock" />
-              <span>不需要自己买服务器；更新不是强制的。GitHub 仓库里放 update.json，Release 里放 APK，就能检查新版；不喜欢新版可以从历史版本回退安装。</span>
+              <span>发现新版本后可以手动下载；如果不想升级，也可以从历史版本里安装之前的版本。</span>
             </div>
           </>
         )}
@@ -5738,7 +5742,7 @@ function SettingsView({
           <button
             type="button"
             key={item.label}
-            onClick={() => openSettingsPanel(item.label === '外观' ? 'appearance' : item.label === '预算' ? 'budget' : item.label === '首页' ? 'modules' : 'data')}
+            onClick={() => openSettingsPanel(item.panel)}
           >
             <Icon name={item.icon} />
             <span>{item.label}</span>

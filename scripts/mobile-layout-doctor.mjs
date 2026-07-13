@@ -540,7 +540,7 @@ async function runTimetableSettingsInteractionCheck(pageSocket) {
       spanInteractionAfterRender?.summary.includes('第 1-2 节') &&
       spanInteractionAfterRender?.summary.includes('08:00-09:50') &&
       (spanInteractionAfterRender?.conflict === '' ||
-        spanInteractionAfterRender?.conflict.includes('?????????')),
+        spanInteractionAfterRender?.conflict.includes('占用时间重叠')),
     JSON.stringify(spanInteractionAfterRender),
   )
 
