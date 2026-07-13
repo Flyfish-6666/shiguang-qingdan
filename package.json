@@ -27,7 +27,8 @@
     "verify": "npm run app:doctor && npm run quick-capture:doctor && npm run build && npm run lint",
     "icons:generate": "powershell -ExecutionPolicy Bypass -File scripts/generate-app-icons.ps1",
     "apk:debug": "npm run android:debug",
-    "release:github": "node scripts/prepare-github-release.mjs"
+    "release:github": "node scripts/prepare-github-release.mjs",
+    "apk:version": "npm run apk:debug && npm run release:github --"
   },
   "engines": {
     "node": ">=22"

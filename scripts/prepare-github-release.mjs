@@ -20,11 +20,14 @@ if (!existsSync(sourceApk)) {
 const versionCode = Number(version.replace(/\D/g, ''))
 const tag = `v${version}`
 const apkName = `shiguang-qingdan-${version}.apk`
+const localApkName = `拾光清单-${version}.apk`
 const releaseDir = join(root, 'release', tag)
 mkdirSync(releaseDir, { recursive: true })
 
 const releaseApk = join(releaseDir, apkName)
+const localApk = resolve(root, '..', localApkName)
 copyFileSync(sourceApk, releaseApk)
+copyFileSync(sourceApk, localApk)
 
 const notesPath = join(root, 'release-notes.txt')
 const fallbackNotes = [
@@ -94,6 +97,7 @@ writeFileSync(join(releaseDir, 'release-body.md'), releaseBody, 'utf8')
 
 console.log(`已准备 GitHub Release：${tag}`)
 console.log(`APK：release/${tag}/${basename(releaseApk)}`)
+console.log(`本地安装包：${localApk}`)
 console.log(`update.json：release/${tag}/update.json，并已同步到 public/update.json`)
 console.log(`Release 正文：release/${tag}/release-body.md`)
 console.log('下一步：创建 GitHub Release，上传 APK，并把 release-body.md 作为发布说明。')
