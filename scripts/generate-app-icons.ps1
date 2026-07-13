@@ -57,6 +57,12 @@ function Draw-Logo($size, $path, [switch]$Round, [switch]$ForegroundOnly) {
     $bgPath.Dispose()
   }
 
+  # Keep the first checklist mark, with calmer breathing room inside the app icon.
+  $markScale = 0.68
+  $graphics.TranslateTransform($s / 2, $s / 2)
+  $graphics.ScaleTransform($markScale, $markScale)
+  $graphics.TranslateTransform(-$s / 2, -$s / 2)
+
   $shadow = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(38, 45, 73, 55))
   $paperShadow = New-RoundRect ($s * 0.265) ($s * 0.205 + $s * 0.018) ($s * 0.48) ($s * 0.64) ($s * 0.15)
   $graphics.FillPath($shadow, $paperShadow)
@@ -145,7 +151,7 @@ function Draw-Splash($size, $path) {
   $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $graphics.Clear([System.Drawing.ColorTranslator]::FromHtml('#fbf4e9'))
   $tmp = Join-Path $env:TEMP "shiguang-icon-$size.png"
-  Draw-Logo ([int]($size * 0.20)) $tmp
+  Draw-Logo ([int]($size * 0.15)) $tmp
   $icon = [System.Drawing.Image]::FromFile($tmp)
   $x = ($size - $icon.Width) / 2
   $y = ($size - $icon.Height) / 2

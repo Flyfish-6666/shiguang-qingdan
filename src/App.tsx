@@ -57,6 +57,7 @@ type ModuleKey =
   | 'notes'
   | 'reports'
 type ViewKey = 'today' | ModuleKey | 'settings'
+type QuickCaptureTarget = 'ledger' | 'calendar' | 'tasks' | 'notes'
 type Priority = 'low' | 'medium' | 'high'
 type LedgerType = 'expense' | 'income'
 type AppearanceKey = 'journal' | 'clean' | 'dark'
@@ -293,7 +294,7 @@ type ModuleMeta = {
 
 const STORAGE_KEY = 'shiguang-list-app-v2'
 const STORAGE_VERSION = 3
-const APP_VERSION = '1.5'
+const APP_VERSION = '1.0'
 const UPDATE_MANIFEST_URL = 'https://raw.githubusercontent.com/Flyfish-6666/shiguang-qingdan/main/update.json'
 const UPDATE_RELEASES_URL = 'https://github.com/Flyfish-6666/shiguang-qingdan/releases/latest'
 const UPDATE_HISTORY_URL = 'https://github.com/Flyfish-6666/shiguang-qingdan/releases'
@@ -1146,35 +1147,83 @@ function updateTimetableProfiles(nextProfiles: TimetableProfile[]) {
     if (target) notify(alreadyDone ? '已取消打卡' : '习惯打卡成功')
   }
 
-  function quickAdd(text: string, ledgerOverride?: Partial<Pick<LedgerItem, 'category' | 'type'>>) {
+  function quickAdd(
+    text: string,
+    options?: {
+      forceView?: QuickCaptureTarget
+      ledgerOverride?: Partial<Pick<LedgerItem, 'category' | 'type'>>
+    },
+  ) {
+    const value = text.trim()
+    if (!value) return false
+
+    if (options?.forceView === 'ledger') {
+      const ledger = parseQuickLedger(value, selectedDate)
+      if (!ledger) return false
+      addLedger({ ...ledger, ...options.ledgerOverride })
+      return true
+    }
+
+    if (options?.forceView === 'calendar') {
+      const event = parseQuickEvent(value, selectedDate) ?? {
+        title: value,
+        date: selectedDate,
+        start: '09:00',
+        end: '10:00',
+        category: '生活',
+        note: '快捷记录',
+      }
+      addEvent(event)
+      return true
+    }
+
+    if (options?.forceView === 'tasks') {
+      const task = parseQuickTask(value, selectedDate) ?? {
+        title: value,
+        due: selectedDate,
+        priority: 'medium' as Priority,
+        list: '快捷',
+        important: true,
+        urgent: false,
+      }
+      addTask(task)
+      return true
+    }
+
+    if (options?.forceView === 'notes') {
+      addNote({
+        title: value.slice(0, 18),
+        body: value,
+        color: 'amber',
+        pinned: false,
+      })
+      return true
+    }
+
     const ledger = parseQuickLedger(text, selectedDate)
     if (ledger) {
-      addLedger({ ...ledger, ...ledgerOverride })
-      navigate('ledger')
+      addLedger({ ...ledger, ...options?.ledgerOverride })
       return true
     }
 
     const event = parseQuickEvent(text, selectedDate)
     if (event) {
       addEvent(event)
-      navigate('calendar')
       return true
     }
 
     const task = parseQuickTask(text, selectedDate)
     if (task) {
       addTask(task)
-      navigate('tasks')
       return true
     }
 
     addNote({
-      title: text.trim().slice(0, 18),
-      body: text.trim(),
+      title: value.slice(0, 18),
+      body: value,
       color: 'amber',
       pinned: false,
     })
-    navigate('notes')
     return true
   }
 
@@ -1580,7 +1629,7 @@ function TodayView({
   homeModules: ModuleKey[]
   setView: (view: ViewKey, options?: { replace?: boolean }) => void
   openQuickCreate: (view: ViewKey) => void
-  quickAdd: (text: string, ledgerOverride?: Partial<Pick<LedgerItem, 'category' | 'type'>>) => boolean
+  quickAdd: (text: string, options?: { forceView?: QuickCaptureTarget; ledgerOverride?: Partial<Pick<LedgerItem, 'category' | 'type'>> }) => boolean
   setHomeModuleSlot: (index: number, key: ModuleKey) => void
   toggleTask: (id: string) => void
   toggleHabit: (id: string, date?: string) => void
@@ -1588,6 +1637,7 @@ function TodayView({
   const [quickText, setQuickText] = useState('')
   const [quickLedgerType, setQuickLedgerType] = useState<QuickLedgerType | null>(null)
   const [quickLedgerCategory, setQuickLedgerCategory] = useState<string | null>(null)
+  const [quickForcedView, setQuickForcedView] = useState<QuickCaptureTarget | null>(null)
   const [timelineFilter, setTimelineFilter] = useState<'all' | 'calendar' | 'tasks' | 'ledger' | 'timetable'>('all')
   const [replacingHomeSlot, setReplacingHomeSlot] = useState<number | null>(null)
   const quickInputRef = useRef<HTMLInputElement | null>(null)
@@ -1670,12 +1720,13 @@ function TodayView({
   const quickLedgerCategoryValue = quickLedgerCategory ?? (
     quickLedgerCategories.includes(quickLedgerDraft?.category ?? '') ? quickLedgerDraft?.category : quickLedgerCategories[0]
   )
-  const quickCorrectionActions: Array<{ label: string; icon: IconName; view: ViewKey }> = [
+  const quickCorrectionActions: Array<{ label: string; icon: IconName; view: QuickCaptureTarget }> = [
     { label: '记账', icon: 'ledger', view: 'ledger' },
     { label: '日程', icon: 'calendar', view: 'calendar' },
     { label: '清单', icon: 'tasks', view: 'tasks' },
     { label: '便签', icon: 'notes', view: 'notes' },
   ]
+  const quickActiveView = quickForcedView ?? quickIntent?.view ?? 'notes'
   const quickPreview = quickPreviewEnabled
     ? quickIntent
     : quickText.trim()
@@ -1730,11 +1781,15 @@ function TodayView({
     const ledgerOverride = quickLedgerDraft
       ? { type: quickLedgerTypeValue, category: quickLedgerCategoryValue }
       : undefined
-    const ok = quickAdd(quickText, ledgerOverride)
+    const ok = quickAdd(quickText, {
+      forceView: quickActiveView,
+      ledgerOverride,
+    })
     if (ok) {
       setQuickText('')
       setQuickLedgerType(null)
       setQuickLedgerCategory(null)
+      setQuickForcedView(null)
     }
   }
 
@@ -1742,36 +1797,24 @@ function TodayView({
     setQuickText(sample)
     setQuickLedgerType(null)
     setQuickLedgerCategory(null)
+    setQuickForcedView(null)
   }
 
   function jumpTo(ref: RefObject<HTMLElement | null>) {
     ref.current?.scrollIntoView({ behavior: data.settings.reduceMotion ? 'auto' : 'smooth', block: 'start' })
   }
 
-  function openQuickCorrection(view: ViewKey) {
+  function openQuickCorrection(view: QuickCaptureTarget) {
     const text = quickText.trim()
     if (!text) {
       openQuickCreate(view)
       return
     }
-    if (view === 'ledger') {
-      const parsed = parseQuickLedger(text, selectedDate)
-      setView('ledger')
-      if (!parsed) openQuickCreate('ledger')
-      return
+    setQuickForcedView(view)
+    if (view !== 'ledger') {
+      setQuickLedgerType(null)
+      setQuickLedgerCategory(null)
     }
-    if (view === 'calendar') {
-      setView('calendar')
-      openQuickCreate('calendar')
-      return
-    }
-    if (view === 'tasks') {
-      setView('tasks')
-      openQuickCreate('tasks')
-      return
-    }
-    setView('notes')
-    openQuickCreate('notes')
   }
 
   return (
@@ -1806,6 +1849,7 @@ function TodayView({
               setQuickText(event.target.value)
               setQuickLedgerType(null)
               setQuickLedgerCategory(null)
+              setQuickForcedView(null)
             }}
           />
         </div>
@@ -1848,7 +1892,13 @@ function TodayView({
           )}
           <div className="quick-correction-row" aria-label="快捷记录纠错">
             {quickCorrectionActions.map((action) => (
-              <button type="button" key={action.label} onClick={() => openQuickCorrection(action.view)}>
+              <button
+                type="button"
+                key={action.label}
+                className={quickActiveView === action.view ? 'active' : ''}
+                aria-pressed={quickActiveView === action.view}
+                onClick={() => openQuickCorrection(action.view)}
+              >
                 <Icon name={action.icon} />
                 {action.label}
               </button>
@@ -2340,11 +2390,14 @@ function LedgerView({
 }) {
   const [quickText, setQuickText] = useState('')
   const quickParsed = useMemo(() => parseQuickLedger(quickText, selectedDate), [quickText, selectedDate])
+  const [quickLedgerType, setQuickLedgerType] = useState<QuickLedgerType | null>(null)
+  const [quickLedgerCategory, setQuickLedgerCategory] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [shouldAutoFocus, setShouldAutoFocus] = useState(false)
   const [budgetDraft, setBudgetDraft] = useState(String(monthlyBudget))
   const [showMonthDetails, setShowMonthDetails] = useState(false)
+  const quickInputRef = useRef<HTMLInputElement | null>(null)
   const [form, setForm] = useState({
     title: '',
     amount: '',
@@ -2366,6 +2419,14 @@ function LedgerView({
   const categoryOptions = form.type === 'income'
     ? ['收入', '工资', '兼职', '其他']
     : ['餐饮', '交通', '购物', '住房', '健康', '学习', '娱乐', '其他']
+  const quickLedgerTypeValue = quickLedgerType ?? quickParsed?.type ?? 'expense'
+  const quickCategoryOptions = quickLedgerTypeValue === 'income'
+    ? ['收入', '工资', '兼职', '红包', '奖金', '报销', '退款', '其他']
+    : ['餐饮', '交通', '购物', '学习', '娱乐', '健康', '住房', '其他']
+  const quickParsedCategory = quickParsed?.category
+  const quickLedgerCategoryValue: string = quickLedgerCategory ?? (
+    quickParsedCategory && quickCategoryOptions.includes(quickParsedCategory) ? quickParsedCategory : quickCategoryOptions[0] ?? '其他'
+  )
   const ledgerAmount = Number(form.amount)
   const invalidLedgerAmount = form.amount.trim() !== '' && (!Number.isFinite(ledgerAmount) || ledgerAmount <= 0)
   const canSubmitLedger = Number.isFinite(ledgerAmount) && ledgerAmount > 0
@@ -2390,7 +2451,12 @@ function LedgerView({
     ? `${categoryChart[0].category}占 ${Math.round((categoryChart[0].total / Math.max(1, totalExpenseForChart)) * 100)}%，本月最明显`
     : '先记一笔，拾光会自动整理花销重点'
   const quickLedgerSuggestions = categoryTotals.slice(0, 4).map((item) => item.category)
-  const quickLedgerChips = Array.from(new Set([...quickLedgerSuggestions, '餐饮', '交通', '购物', '学习'])).slice(0, 5)
+  const quickBaseChips = quickLedgerTypeValue === 'income'
+    ? ['收入', '工资', '兼职', '红包', '奖金', '报销', '退款', '其他']
+    : ['餐饮', '交通', '购物', '学习', '健康', '住房', '娱乐', '其他']
+  const quickLedgerChips = Array.from(new Set([...quickLedgerSuggestions, ...quickBaseChips]))
+    .filter((category) => quickCategoryOptions.includes(category))
+    .slice(0, 6)
 
   useEffect(() => {
     setBudgetDraft(String(monthlyBudget))
@@ -2486,8 +2552,8 @@ function LedgerView({
       setForm({
         title: fallbackTitle,
         amount: '',
-        type: 'expense',
-        category: '餐饮',
+        type: quickLedgerTypeValue,
+        category: quickLedgerCategoryValue,
         date: selectedDate,
         note: '由快捷记账转为手动补全',
       })
@@ -2495,8 +2561,10 @@ function LedgerView({
       setSheetOpen(true)
       return
     }
-    onAdd(parsed)
+    onAdd({ ...parsed, type: quickLedgerTypeValue, category: quickLedgerCategoryValue })
     setQuickText('')
+    setQuickLedgerType(null)
+    setQuickLedgerCategory(null)
   }
 
   return (
@@ -2556,24 +2624,45 @@ function LedgerView({
       <SectionTitle icon="pen" title="快速记账" />
       <form className="quick-capture" onSubmit={submitQuick}>
         <span aria-hidden="true"><Icon name="ledger" /></span>
-        <input aria-label="快速记账" enterKeyHint="done" placeholder="午饭23元 / 工资5000" value={quickText} onChange={(event) => setQuickText(event.target.value)} />
+        <input
+          ref={quickInputRef}
+          aria-label="快速记账"
+          enterKeyHint="done"
+          placeholder="午饭23元 / 工资5000"
+          value={quickText}
+          onChange={(event) => setQuickText(event.target.value)}
+        />
         <button type="submit">记录</button>
       </form>
+      <div className="quick-type-row ledger-quick-type" aria-label="快速记账收支类型">
+        {(['expense', 'income'] as const).map((type) => (
+          <button
+            type="button"
+            key={type}
+            className={quickLedgerTypeValue === type ? 'active' : ''}
+            onClick={() => {
+              setQuickLedgerType(type)
+              setQuickLedgerCategory(null)
+              quickInputRef.current?.focus()
+            }}
+          >
+            {type === 'expense' ? '支出' : '收入'}
+          </button>
+        ))}
+      </div>
       <div className="ledger-smart-chips" aria-label="常用记账分类">
         {quickLedgerChips.map((category) => (
-          <button type="button" key={category} onClick={() => {
-            setEditingId(null)
-            setForm({
-              title: '',
-              amount: '',
-              type: 'expense',
-              category,
-              date: selectedDate,
-              note: '',
-            })
-            setShouldAutoFocus(false)
-            setSheetOpen(true)
-          }}>
+          <button
+            type="button"
+            key={category}
+            className={quickLedgerCategoryValue === category ? 'active' : ''}
+            aria-pressed={quickLedgerCategoryValue === category}
+            onClick={() => {
+              setQuickLedgerType(quickLedgerTypeValue)
+              setQuickLedgerCategory(category)
+              quickInputRef.current?.focus()
+            }}
+          >
             <Icon name="ledger" />
             {category}
           </button>
@@ -2583,9 +2672,9 @@ function LedgerView({
         <div className="quick-ledger-preview">
           <span className="module-icon tone-leaf"><Icon name="ledger" /></span>
           <div>
-            <small>将记录为{quickParsed.type === 'income' ? '收入' : '支出'}</small>
+            <small>将记录为{quickLedgerTypeValue === 'income' ? '收入' : '支出'}</small>
             <strong>{quickParsed.title} · {currency.format(quickParsed.amount)}</strong>
-            <em>{quickParsed.category} · {quickParsed.date}</em>
+            <em>{quickLedgerCategoryValue} · {quickParsed.date}</em>
           </div>
         </div>
       )}
@@ -6763,7 +6852,7 @@ function searchLedger(item: LedgerItem, query: string) {
   return [item.title, item.category, item.note, item.date].some((value) => value.toLowerCase().includes(term))
 }
 
-function previewQuickText(text: string, selectedDate: string): { icon: IconName; text: string; tone?: 'income' | 'expense' } | null {
+function previewQuickText(text: string, selectedDate: string): { icon: IconName; text: string; view: QuickCaptureTarget; tone?: 'income' | 'expense' } | null {
   const value = text.trim()
   if (!value) return null
 
@@ -6771,6 +6860,7 @@ function previewQuickText(text: string, selectedDate: string): { icon: IconName;
   if (ledger) {
     return {
       icon: 'ledger',
+      view: 'ledger',
       text: `将记录为${ledger.type === 'expense' ? '支出' : '收入'}：${ledger.title} ${currency.format(ledger.amount)}`,
       tone: ledger.type,
     }
@@ -6780,6 +6870,7 @@ function previewQuickText(text: string, selectedDate: string): { icon: IconName;
   if (event) {
     return {
       icon: 'calendar',
+      view: 'calendar',
       text: `将加入日程：${event.date} ${event.start} ${event.title}`,
     }
   }
@@ -6788,12 +6879,14 @@ function previewQuickText(text: string, selectedDate: string): { icon: IconName;
   if (task) {
     return {
       icon: task.due === selectedDate ? 'tasks' : 'calendar',
+      view: 'tasks',
       text: `将加入清单：${task.due} · ${task.title}`,
     }
   }
 
   return {
     icon: 'notes',
+    view: 'notes',
     text: `将存为便签：${value.slice(0, 18)}`,
   }
 }
@@ -6873,3 +6966,4 @@ function cryptoId() {
 }
 
 export default App
+

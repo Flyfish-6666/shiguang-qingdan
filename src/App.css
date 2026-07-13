@@ -1126,6 +1126,12 @@ button {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
+.quick-correction-row button.active {
+  color: #fffaf2;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 86%, #d8895f), color-mix(in srgb, var(--primary) 70%, #7dbb8d));
+  box-shadow: 0 9px 18px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
 .quick-correction-row button {
   display: inline-flex;
   align-items: center;
@@ -1361,6 +1367,12 @@ button {
 .appearance-dark .quick-category-row button.active {
   color: #171a2e;
   background: #e8c16a;
+}
+
+.appearance-dark .quick-correction-row button.active {
+  color: #171a2e;
+  background: linear-gradient(135deg, #ffd28a, #a7e2b7);
+  box-shadow: 0 10px 24px rgba(167, 226, 183, 0.18);
 }
 
 .daily-quote-hint {
@@ -15267,6 +15279,17 @@ textarea {
   font-weight: 830;
 }
 
+.ledger-quick-type {
+  margin-top: -4px;
+}
+
+.ledger-smart-chips button.active {
+  color: #fffaf2;
+  border-color: color-mix(in srgb, var(--primary) 54%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 84%, #d8895f), color-mix(in srgb, var(--primary) 72%, #7dbb8d));
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
 .ledger-smart-chips svg {
   width: 14px;
   height: 14px;
@@ -15297,6 +15320,12 @@ textarea {
 
 .appearance-dark .ledger-smart-chips button {
   color: #f8f3ff;
+}
+
+.appearance-dark .ledger-smart-chips button.active {
+  color: #171a2e;
+  border-color: rgba(185, 221, 255, 0.35);
+  background: linear-gradient(135deg, #ffd28a, #a7e2b7);
 }
 
 .appearance-dark .timeline-filter-tabs button.active {
